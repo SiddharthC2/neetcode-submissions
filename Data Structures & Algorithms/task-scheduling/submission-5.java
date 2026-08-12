@@ -1,0 +1,121 @@
+class Solution {
+
+    private static final class MaxHeap {
+
+        private final List<Integer> heap;
+
+        public MaxHeap() {
+            heap = new ArrayList<>();
+        }
+
+        public int size() {
+            return heap.size();
+        }
+
+        public void build(int[] nums) {
+            for (int num: nums) {
+                heap.add(num);
+            }
+            for (int i=(heap.size()-1)/2; i>=0; i--) {
+                heapifyDown(i);
+            }
+        }
+
+        public Integer poll() {
+            if (heap.size() == 0) return null;
+            Integer peek = heap.get(0);
+            heap.set(0, heap.get(heap.size()-1));
+            heap.remove(heap.size()-1);
+            heapifyDown(0);
+            return peek;
+        }
+
+        public void offer(int num) {
+            heap.add(num);
+            heapifyUp(heap.size()-1);
+        }
+
+        private void heapifyDown(int curr) {
+            int childL = (curr*2)+1, childR = childL+1;
+            int size = heap.size(), swapIdx;
+            while (childL < size) {
+                swapIdx = childL;
+                if (childR < size && heap.get(childR) >= heap.get(childL)) {
+                    swapIdx = childR;
+                }
+                if (heap.get(curr) >= heap.get(swapIdx)) {
+                    return;
+                }
+                swap(curr, swapIdx);
+                curr = swapIdx;
+                childL = (curr*2)+1;
+                childR = childL+1;
+            }
+        }
+
+        private void heapifyUp(int curr) {
+            if (curr == 0) return;
+            int parent = (curr-1)/2;
+            while (parent >= 0 && heap.get(parent) < heap.get(curr)) {
+                swap(curr, parent);
+                curr = parent;
+                parent = (curr-1)/2;
+            }
+        }
+
+        private void swap(int idx1, int idx2) {
+            int tmp = heap.get(idx1);
+            heap.set(idx1, heap.get(idx2));
+            heap.set(idx2, tmp);
+        }
+
+    }
+
+    public int leastInterval(char[] tasks, int n) {
+        if (n == 0 || tasks.length == 1) return tasks.length;
+        int[] freq = new int[26];
+        int unique = 0;
+        for (char task: tasks) {
+            if (freq[task-'A'] == 0) unique++;
+            freq[task-'A']++;
+        }
+        int[] freqNonZero = new int[unique];
+        int curr = 0;
+        for (int i=0; i<26; i++) {
+            if (freq[i] != 0) {
+                freqNonZero[curr++] = freq[i];
+            }
+        }
+
+        final MaxHeap maxHeap = new MaxHeap();
+        maxHeap.build(freqNonZero);
+        
+        int cycles = 0, executed = 0;
+        Integer currTask;
+        while (maxHeap.size() > 0) {
+            List<Integer> remList = new ArrayList<>();
+            executed = 0;
+            for (int i=0; i<=n; i++) {
+                currTask = maxHeap.poll();
+                if (currTask == null) {
+                    break;
+                }
+                currTask--;
+                if (currTask > 0) {
+                    remList.add(currTask);
+                }
+                executed++;
+            }
+            for (int rem: remList) {
+                maxHeap.offer(rem);
+            }
+
+            if (maxHeap.size() > 0) {
+                cycles += (n+1);
+            } else {
+                cycles += (executed);
+            }
+        }
+        return cycles;
+    }
+}
